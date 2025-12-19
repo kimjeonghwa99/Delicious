@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Delicious - 현재 위치 맛집</title>
+  <style>
+    body { margin: 0; font-family: system-ui, -apple-system, Arial, sans-serif; }
+    header { padding: 12px 16px; border-bottom: 1px solid #eee; }
+    #map { width: 100%; height: 60vh; }
+    #controls { display: flex; gap: 8px; padding: 12px 16px; border-bottom: 1px solid #eee; }
+    button { padding: 10px 12px; border: 1px solid #ddd; background: white; cursor: pointer; border-radius: 8px; }
+    button:active { transform: translateY(1px); }
+    #list { padding: 12px 16px; }
+    .item { padding: 10px 0; border-bottom: 1px dashed #eee; }
+    .name { font-weight: 700; }
+    .meta { color: #666; font-size: 13px; margin-top: 4px; }
+    .error { color: #b00020; padding: 12px 16px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div><b>Delicious</b> — 현재 위치 기반 장소 찾기</div>
+  </header>
+
+  <div id="controls">
+    <button onclick="searchKeyword('맛집')">맛집</button>
+    <button onclick="searchKeyword('카페')">카페</button>
+    <button onclick="searchKeyword('점심')">점심</button>
+    <button onclick="searchKeyword('한식')">한식</button>
+  </div>
+
+  <div id="map"></div>
+  <div id="list"></div>
+  <div id="msg" class="error"></div>
+
+  <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=여기에_JS_KEY&libraries=services"></script>
+  <script>
+    let map, ps, myLatLng;
+    let markers = [];
+
+    function setMsg(text) {
+      document.getElementById('msg').textContent = text || '';
+    }
+
+    function clearMarkers() {
+      markers.forEach(m => m.setMap(null));
+      markers = [];
+    }
+
+    function renderList(data) {
+      const el = document.getElementById('list');
+      if (!data || data.length === 0) {
+        el.innerHTML = '<div class="item">검색 결과가 없습니다.</div>';
+        return;
+      }
+      el.innerHTML = data.map(p => `
+        <div class="item">
+          <div class="name">${p.place_name} <span class="meta">(${p.distance || '?'}m)</span></div>
+          <div class="meta">${p.road_address_name || p.address_name || ''}</div>
+          ${p.phone ? `<div class="meta">${p.phone}</div>` : ''}
+        </div>
+      `).join('');
+    }
+
+    function addPlaceMarkers(data) {
+      clearMarkers();
+      data.forEach(p => {
+        const pos = new kakao.maps.LatLng(p.y, p.x);
+        const marker = new kakao.maps.Marker({ map, position: pos });
+        markers.push(marker);
+      });
+    }
+
+    function searchKeyword(keyword) {
+      if (!ps || !myLatLng) return;
+
+      setMsg('검색 중...');
+      ps.keywordSearch(keyword, (data, status) => {
+        if (status !== kakao.maps.services.Status.OK) {
+          setMsg('검색 실패: 키워드/반경을 바꿔보세요.');
+          renderList([]);
+          clearMarkers();
+          return;
+        }
+        setMsg('');
+        addPlaceMarkers(data);
+        renderList(data);
+      }, {
+        location: myLatLng,
+        radius: 1000,
+        sort: kakao.maps.services.SortBy.DISTANCE
+      });
+    }
+
+    function initMap(lat, lng) {
+      myLatLng = new kakao.maps.LatLng(lat, lng);
+
+      map = new kakao.maps.Map(document.getElementById('map'), {
+        center: myLatLng,
+        level: 4
+      });
+
+      // 내 위치 마커
+      new kakao.maps.Marker({ map, position: myLatLng });
+
+      ps = new kakao.maps.services.Places();
+
+      // 초기 검색
+      searchKeyword('맛집');
+    }
+
+    // 현재 위치 요청
+    if (!navigator.geolocation) {
+      setMsg('이 브라우저는 위치 기능을 지원하지 않습니다.');
+    } else {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => initMap(pos.coords.latitude, pos.coords.longitude),
+        (err) => setMsg('위치 권한이 필요합니다. 브라우저에서 위치 허용 후 새로고침 해주세요.')
+      );
+    }
+  </script>
+</body>
+</html>
