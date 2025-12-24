@@ -43,7 +43,7 @@
 
           // /p/search/ 로 열어야 네이버 지도 홈(추천) 대신 검색 결과로 바로 갑니다.
           const url =
-            `https://map.naver.com/p/search/${encodeURIComponent5cc113eed1ba23a0a9dca485916334e8}?c=${lng},${lat},15,0,dh`;
+            `https://map.naver.com/p/search/${encodeURIComponent(keyword)}?c=${lng},${lat},15,0,dh`;
 
           window.open(url, '_blank', 'noopener,noreferrer');
         },
