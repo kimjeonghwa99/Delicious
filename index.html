@@ -6,28 +6,120 @@
   <title>Delicious - 내 주변 찾기</title>
 
   <style>
-    body { margin: 0; font-family: system-ui, -apple-system, Arial, sans-serif; background:#fafafa; }
-    header { padding: 12px 16px; border-bottom: 1px solid #eee; background:#fff; }
-    #controls { display: flex; gap: 8px; padding: 12px 16px; border-bottom: 1px solid #eee; background:#fff; }
-    button { flex: 1; padding: 12px 0; border: 1px solid #ddd; background: #fff; border-radius: 10px; cursor: pointer; }
-    button:hover { background:#f2f2f2; }
-    #info { padding: 12px 16px; color:#666; font-size: 14px; }
+    :root{
+      --tab-h: 72px;
+      --border: #eee;
+      --text: #666;
+      --bg: #fafafa;
+      --white: #fff;
+      --active: #1a73e8;
+      --inactive: #7a7a7a;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Arial, sans-serif;
+      background: var(--bg);
+
+      /* 하단 탭바에 가리지 않게 여백 확보 */
+      padding-bottom: calc(var(--tab-h) + env(safe-area-inset-bottom));
+    }
+
+    header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--white);
+    }
+
+    #info {
+      padding: 12px 16px;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    /* ===== 하단 탭바 ===== */
+    .bottom-tab {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+
+      height: var(--tab-h);
+      padding-bottom: env(safe-area-inset-bottom);
+      background: var(--white);
+
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      align-items: center;
+
+      border-top: 1px solid var(--border);
+      box-shadow: 0 -6px 18px rgba(0,0,0,0.06);
+      z-index: 9999;
+    }
+
+    .tab-btn {
+      height: var(--tab-h);
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+
+      color: var(--inactive);
+      font-size: 12px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .tab-btn .icon {
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .tab-btn:active {
+      background: rgba(0,0,0,0.04);
+    }
+
+    /* 선택된 탭(시각적으로 표시만; 단일 화면이라면 클릭 시 잠깐 활성화 처리) */
+    .tab-btn.active {
+      color: var(--active);
+      font-weight: 600;
+    }
   </style>
 </head>
 
 <body>
   <header><b>Delicious</b> — 현재 위치 기반 주변 검색</header>
 
-  <div id="controls">
-    <button onclick="openNaverSearch('음식점')">음식점</button>
-    <button onclick="openNaverSearch('카페')">카페</button>
-    <button onclick="openNaverSearch('버스정류장')">버스</button>
-    <button onclick="openNaverSearch('지하철역')">지하철</button>
+  <div id="info">
+    하단 메뉴를 누르면 현재 위치 기준으로 네이버 지도 검색 결과가 새 탭으로 열립니다.
   </div>
 
-  <div id="info">
-    버튼을 누르면 현재 위치 기준으로 네이버 지도 검색 결과가 새 탭으로 열립니다.
-  </div>
+  <!-- 하단 탭바 -->
+  <nav class="bottom-tab" aria-label="하단 내비게이션">
+    <button class="tab-btn active" type="button" onclick="handleTab(this, '음식점')">
+      <span class="icon">🍽️</span>
+      <span class="label">음식점</span>
+    </button>
+
+    <button class="tab-btn" type="button" onclick="handleTab(this, '카페')">
+      <span class="icon">☕</span>
+      <span class="label">카페</span>
+    </button>
+
+    <button class="tab-btn" type="button" onclick="handleTab(this, '버스정류장')">
+      <span class="icon">🚌</span>
+      <span class="label">버스</span>
+    </button>
+
+    <button class="tab-btn" type="button" onclick="handleTab(this, '지하철역')">
+      <span class="icon">🚇</span>
+      <span class="label">지하철</span>
+    </button>
+  </nav>
 
   <script>
     function openNaverSearch(keyword) {
@@ -49,6 +141,13 @@
         },
         () => alert('위치 권한을 허용해주세요.')
       );
+    }
+
+    // 클릭한 탭을 활성화 표시하고 검색 실행
+    function handleTab(btn, keyword) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      openNaverSearch(keyword);
     }
   </script>
 </body>
